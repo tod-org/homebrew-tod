@@ -4,9 +4,9 @@
 class Tod < Formula
   desc "An unofficial Todoist command line client written in Rust"
   homepage "https://github.com/alanvardy/tod"
-  url "https://github.com/alanvardy/tod/releases/download/v0.7.1/tod-mac.tar.gz"
-  sha256 "d034efa84c9412dd62c5eb824af73a36882694ac1d38f14f0f860946d4d160c1"
-  version "0.7.1"
+  url "https://github.com/alanvardy/tod/releases/download/v0.7.2/tod-mac.tar.gz"
+  sha256 "5ba0c888c20e88c646e032d3c80450ee9f4cece70ef06687e6294c7b41233201"
+  version "0.7.2"
 
   def install
     bin.install "tod"
