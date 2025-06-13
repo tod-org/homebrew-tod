@@ -1,5 +1,4 @@
-name: Update Homebrew Formula
-
+name: Homebrew Release
 on:
   workflow_dispatch:
     inputs:
