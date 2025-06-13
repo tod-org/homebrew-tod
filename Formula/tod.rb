@@ -1,5 +1,5 @@
 class Tod < Formula
-  desc "unofficial Todoist command-line client written in Rust"
+  desc "Unofficial Todoist command-line client written in Rust"
   homepage "https://github.com/alanvardy/tod"
   version "0.8.0"
 
@@ -24,8 +24,9 @@ class Tod < Formula
   def install
     bin.install "tod"
   end
-end
 
-test do
-  assert_match "Tod #{version}", shell_output("#{bin}/tod -V")
+  test do
+    expected_output = "Tod #{version}"
+    assert_match expected_output, shell_output("#{bin}/tod -V")
+  end
 end
