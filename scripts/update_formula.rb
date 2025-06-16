@@ -3,7 +3,7 @@ require "open-uri"
 
 version = ARGV[0] or abort("Usage: ruby update_formula.rb <version> (e.g. 0.8.0)")
 tag = "v#{version}"
-base_url = "https://github.com/stacksjb/tod-dev/releases/download/#{tag}"
+base_url = "https://github.com/alanvardy/tod/releases/download/#{tag}"
 
 platforms = {
   "mac_intel"   => "tod-#{version}-darwin-amd64.tar.gz",
