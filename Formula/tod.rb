@@ -6,18 +6,18 @@ class Tod < Formula
   if OS.mac?
     if Hardware::CPU.intel?
       url "https://github.com/stacksjb/tod-dev/releases/download/v0.8.0/tod-0.8.0-darwin-amd64.tar.gz"
-      sha256 "efa918edad03a8aac7ae420a229b1ac08c7ca98503034017d08205cfbe3a1ff3"
+      sha256 "f90182fab9e4e942fc6f7265c0d1cb5c5796eb7ccfd9381295cf2f596681d9f2"
     elsif Hardware::CPU.arm?
       url "https://github.com/stacksjb/tod-dev/releases/download/v0.8.0/tod-0.8.0-darwin-arm64.tar.gz"
-      sha256 "2da60dce413281c67d6b9b23c9609b00265afb0fe9f835b943e3302eb8cc7529"
+      sha256 "47bd61aa0ac196fe571f4550b787f87462b3398647db0fc154561cb032a0cadf"
     end
   elsif OS.linux?
     if Hardware::CPU.intel?
       url "https://github.com/stacksjb/tod-dev/releases/download/v0.8.0/tod-0.8.0-linux-amd64.tar.gz"
-      sha256 "e82a99a23fe3b7f3473e05c3f24ade1f43cd3ec871c0450387fa5f4c51571c8c"
+      sha256 "5a8aa5e0456ac6b50101c9fafadf804ebb1ff93c56374e924af5a617c83d40e5"
     elsif Hardware::CPU.arm?
       url "https://github.com/stacksjb/tod-dev/releases/download/v0.8.0/tod-0.8.0-linux-arm64.tar.gz"
-      sha256 "6426123783822ea7a8a3e790e66113b98182ecc7b7a514175593b89771ee9ace"
+      sha256 "55153a179abb618f56926591e83ad2f6da8e69dfc6e371610d243eb6398f012c"
     end
   end
 
