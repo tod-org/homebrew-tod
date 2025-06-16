@@ -1,14 +1,15 @@
-name: Homebrew Release
+name: Auto Update Homebrew Formula
 
-# This workflow is triggered manually via GitHub UI with a version input
+# This workflow is triggered remotely from the main repo (alanvardy/tod)
+# using repository_dispatch with event-type 'update-homebrew'
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: "Version (e.g. 0.8.0)"
-        required: true
+  repository_dispatch:
+    types: [update-homebrew]
 
-# Required to allow the action to push commits back to the repo
+  #Allow manaul execution
+  workflow_dispatch:
+
+# Allow this workflow to commit and push changes to the repository
 permissions:
   contents: write
 
@@ -18,37 +19,52 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Check out the repo so we can read and modify files
+      # Step 1: Clone the homebrew-tod repo
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Set up Ruby environment (needed to run update script)
+      # Step 2: Install jq (used to parse GitHub API response)
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+
+      # Step 3: Fetch the latest release tag from alanvardy/tod
+      #         Strip the leading 'v' so we can pass just the version to the script (e.g., 0.8.0)
+      - name: Fetch latest release tag from tod repo
+        id: get_version
+        run: |
+          tag=$(curl -s https://api.github.com/repos/alanvardy/tod/releases/latest | jq -r .tag_name)
+          version=${tag#v}
+          echo "Latest tag: $tag"
+          echo "Version without v: $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      # Step 4: Set up Ruby so we can run the formula update script
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.1'
 
-      # Step 3: Run the Ruby script to download binaries, compute hashes, and update the Formula
+      # Step 5: Run the Ruby script to update the formula with correct version and SHA256s
       - name: Run formula updater
         run: |
-          ruby scripts/update_formula.rb ${{ github.event.inputs.version }}
+          ruby scripts/update_formula.rb ${{ steps.get_version.outputs.version }}
 
-      # Step 4: Show what changed in the Formula for easier debugging
-      - name: Show diff (for debugging)
+      # Step 6: Show a diff of what changed (useful for debugging)
+      - name: Show diff
         run: git --no-pager diff Formula/tod.rb || true
 
-      # Step 5: Only commit and push if there are actual changes
-      - name: Commit and push changes if any
+      # Step 7: Commit and push changes — only if Formula/tod.rb was actually modified
+      - name: Commit and push changes
         run: |
-          # Configure git identity for GitHub Actions
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-          # Check if Formula file has changed
+          # Check for changes and commit only if there are any
           if ! git diff --quiet Formula/tod.rb; then
             echo "✅ Changes detected. Committing..."
             git add Formula/tod.rb
-            git commit -m "Update formula to version ${{ github.event.inputs.version }}"
+            git commit -m "Update formula to version ${{ steps.get_version.outputs.version }}"
             git push
           else
             echo "ℹ️ No changes to commit."
