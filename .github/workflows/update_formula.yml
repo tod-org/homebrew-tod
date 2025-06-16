@@ -1,15 +1,14 @@
-name: Update Homebrew Formula
+name: Update Homebrew Formula from tod
 
-# This workflow is triggered remotely from the main repo (alanvardy/tod)
-# using repository_dispatch with event-type 'update-homebrew'
+# Triggered remotely by 'repository_dispatch' from alanvardy/tod
+# Also supports manual triggering via workflow_dispatch
 on:
   repository_dispatch:
     types: [update-homebrew]
 
-  #Allow manaul execution
   workflow_dispatch:
 
-# Allow this workflow to commit and push changes to the repository
+# Allows pushing commits to the repository
 permissions:
   contents: write
 
@@ -19,19 +18,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Clone the homebrew-tod repo
+      # Step 1: Clone the homebrew-tod repo and ensure we're on the main branch
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-            ref: main
+          ref: main
 
-      # Step 2: Install jq (used to parse GitHub API response)
-      - name: Install dependencies
-        run: |
-          sudo apt-get update && sudo apt-get install -y jq
-
-      # Step 3: Fetch the latest release tag from alanvardy/tod
-      #         Strip the leading 'v' so we can pass just the version to the script (e.g., 0.8.0)
+      # Step 2: Fetch the latest release tag from the tod repo (alanvardy/tod)
+      #         Strip the leading 'v' to pass just the version to the Ruby script (e.g., 0.8.0)
+      # jq comes preinstalled on runners; dont' need to install/update
       - name: Fetch latest release tag from tod repo
         id: get_version
         run: |
@@ -41,22 +36,22 @@ jobs:
           echo "Version without v: $version"
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
-      # Step 4: Set up Ruby so we can run the formula update script
+      # Step 3: Set up Ruby so we can run the formula update script
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.1'
 
-      # Step 5: Run the Ruby script to update the formula with correct version and SHA256s
+      # Step 4: Run the Ruby script to update the formula with correct version and SHA256s
       - name: Run formula updater
         run: |
           ruby scripts/update_formula.rb ${{ steps.get_version.outputs.version }}
 
-      # Step 6: Show a diff of what changed (useful for debugging)
+      # Step 5: Show a diff of what changed (useful for debugging)
       - name: Show diff
         run: git --no-pager diff Formula/tod.rb || true
 
-      # Step 7: Commit and push changes — only if Formula/tod.rb was actually modified
+      # Step 6: Commit and push changes — only if Formula/tod.rb was actually modified
       - name: Commit and push changes
         run: |
           git config user.name "github-actions"
