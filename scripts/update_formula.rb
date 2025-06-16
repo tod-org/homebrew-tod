@@ -26,17 +26,38 @@ formula = File.read(formula_path)
 
 formula.gsub!(/version\s+"[^"]+"/, "version \"#{version}\"")
 
-formula.gsub!(/url ".*darwin-amd64\.tar\.gz"/, "url \"#{base_url}/tod-#{version}-darwin-amd64.tar.gz\"")
-formula.gsub!(/sha256 "[a-f0-9]{64}"/, "sha256 \"#{sha256s["mac_intel"]}\"")
+def replace_sha(formula, platform_key, regex_url, regex_sha, url, new_sha)
+  old_sha = formula[regex_sha]&.match(/sha256\s+"([a-f0-9]{64})"/)&.captures&.first
+  puts "🔁 Replacing #{platform_key} SHA:"
+  puts "   Old: #{old_sha || 'Not found'}"
+  puts "   New: #{new_sha}"
+  formula.gsub!(regex_url, "url \"#{url}\"")
+  formula.gsub!(regex_sha, "sha256 \"#{new_sha}\"")
+end
 
-formula.gsub!(/url ".*darwin-arm64\.tar\.gz"/, "url \"#{base_url}/tod-#{version}-darwin-arm64.tar.gz\"")
-formula.gsub!(/sha256 "[a-f0-9]{64}"/, "sha256 \"#{sha256s["mac_arm"]}\"")
+replace_sha(formula, "mac_intel",
+            /url ".*darwin-amd64\.tar\.gz"/,
+            /sha256 "[a-f0-9]{64}"/,
+            "#{base_url}/tod-#{version}-darwin-amd64.tar.gz",
+            sha256s["mac_intel"])
 
-formula.gsub!(/url ".*linux-amd64\.tar\.gz"/, "url \"#{base_url}/tod-#{version}-linux-amd64.tar.gz\"")
-formula.gsub!(/sha256 "[a-f0-9]{64}"/, "sha256 \"#{sha256s["linux_intel"]}\"")
+replace_sha(formula, "mac_arm",
+            /url ".*darwin-arm64\.tar\.gz"/,
+            /sha256 "[a-f0-9]{64}"/,
+            "#{base_url}/tod-#{version}-darwin-arm64.tar.gz",
+            sha256s["mac_arm"])
 
-formula.gsub!(/url ".*linux-arm64\.tar\.gz"/, "url \"#{base_url}/tod-#{version}-linux-arm64.tar.gz\"")
-formula.gsub!(/sha256 "[a-f0-9]{64}"/, "sha256 \"#{sha256s["linux_arm"]}\"")
+replace_sha(formula, "linux_intel",
+            /url ".*linux-amd64\.tar\.gz"/,
+            /sha256 "[a-f0-9]{64}"/,
+            "#{base_url}/tod-#{version}-linux-amd64.tar.gz",
+            sha256s["linux_intel"])
+
+replace_sha(formula, "linux_arm",
+            /url ".*linux-arm64\.tar\.gz"/,
+            /sha256 "[a-f0-9]{64}"/,
+            "#{base_url}/tod-#{version}-linux-arm64.tar.gz",
+            sha256s["linux_arm"])
 
 File.write(formula_path, formula)
 puts "✅ Updated #{formula_path} for v#{version}"
