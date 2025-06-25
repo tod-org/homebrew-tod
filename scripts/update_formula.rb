@@ -6,15 +6,15 @@ tag = "v#{version}"
 base_url = "https://github.com/alanvardy/tod/releases/download/#{tag}"
 
 platforms = {
-  "mac_intel"   => "tod-#{version}-darwin-amd64.tar.gz",
-  "mac_arm"     => "tod-#{version}-darwin-arm64.tar.gz",
-  "linux_intel" => "tod-#{version}-linux-amd64.tar.gz",
-  "linux_arm"   => "tod-#{version}-linux-arm64.tar.gz"
+  mac_arm:     "tod-#{version}-darwin-arm64.tar.gz",
+  mac_intel:   "tod-#{version}-darwin-amd64.tar.gz",
+  linux_arm:   "tod-#{version}-linux-arm64.tar.gz",
+  linux_intel: "tod-#{version}-linux-amd64.tar.gz"
 }
 
 sha256s = {}
 
-# Download and compute SHA256
+# Download and compute SHA256s
 platforms.each do |key, filename|
   url = "#{base_url}/#{filename}"
   puts "🔽 Downloading #{url}..."
@@ -25,37 +25,39 @@ end
 formula_path = "Formula/tod.rb"
 formula = File.read(formula_path)
 
-# Update version
+# Update version string
 formula.gsub!(/version\s+"[^"]+"/, "version \"#{version}\"")
 
-# Replace SHA after matching URL
-def replace_sha(formula, platform_key, filename, new_sha)
-  url_regex = /url\s+"[^"]*#{Regexp.escape(filename)}"/
-  sha_regex = /sha256\s+"[a-f0-9]{64}"/
+# Helper to replace URL and SHA within a platform-specific block
+def replace_platform_block(formula, platform_key, filename, new_sha)
+  platform_section = case platform_key
+  when :mac_arm     then [/on_macos.*?on_arm.*?\n(.*?)url\s+"[^"]+"\n\s+sha256\s+"[a-f0-9]+"/m, "macOS ARM"]
+  when :mac_intel   then [/on_macos.*?on_intel.*?\n(.*?)url\s+"[^"]+"\n\s+sha256\s+"[a-f0-9]+"/m, "macOS Intel"]
+  when :linux_arm   then [/on_linux.*?on_arm.*?\n(.*?)url\s+"[^"]+"\n\s+sha256\s+"[a-f0-9]+"/m, "Linux ARM"]
+  when :linux_intel then [/on_linux.*?on_intel.*?\n(.*?)url\s+"[^"]+"\n\s+sha256\s+"[a-f0-9]+"/m, "Linux Intel"]
+  end
 
-  url_match = formula.match(url_regex)
-  if url_match
-    sha_match = formula.match(sha_regex, url_match.end(0))
-    if sha_match
-      old_sha = sha_match[0].match(/"([a-f0-9]{64})"/)[1]
-      puts "🔁 Replacing #{platform_key} SHA:"
-      puts "   Old: #{old_sha}"
-      puts "   New: #{new_sha}"
-      formula[sha_match.begin(0)...sha_match.end(0)] = "sha256 \"#{new_sha}\""
-    else
-      puts "⚠️  SHA256 not found after URL for #{platform_key}"
-    end
+  pattern, label = platform_section
+  new_url = "url \"https://github.com/alanvardy/tod/releases/download/v#{ARGV[0]}/#{filename}\""
+  new_sha_line = "sha256 \"#{new_sha}\""
+
+  updated = formula.sub(pattern) do |block|
+    block.gsub(/url\s+"[^"]+"/, new_url).gsub(/sha256\s+"[a-f0-9]+"/, new_sha_line)
+  end
+
+  if updated == formula
+    puts "⚠️  Could not find or replace block for #{label}"
   else
-    puts "⚠️  URL not found for #{platform_key}"
+    puts "✅ Updated #{label} block"
+    formula.replace(updated)
   end
 end
 
-# Perform replacements
-replace_sha(formula, "mac_intel",   platforms["mac_intel"],   sha256s["mac_intel"])
-replace_sha(formula, "mac_arm",     platforms["mac_arm"],     sha256s["mac_arm"])
-replace_sha(formula, "linux_intel", platforms["linux_intel"], sha256s["linux_intel"])
-replace_sha(formula, "linux_arm",   platforms["linux_arm"],   sha256s["linux_arm"])
+# Replace each platform-specific block
+platforms.each do |key, filename|
+  replace_platform_block(formula, key, filename, sha256s[key])
+end
 
-# Write changes
+# Save changes
 File.write(formula_path, formula)
 puts "✅ Updated #{formula_path} for v#{version}"
