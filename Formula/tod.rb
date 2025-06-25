@@ -1,7 +1,7 @@
 class Tod < Formula
   desc "Unofficial Todoist command-line client written in Rust"
   homepage "https://github.com/alanvardy/tod"
-  version "0.8.0"
+  version "0.9.0"
 
   if OS.mac?
     if Hardware::CPU.intel?
