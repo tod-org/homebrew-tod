@@ -9,11 +9,12 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Set up Homebrew
-        run: brew update >/dev/null
-
       - name: Tap tod formula
         run: brew tap alanvardy/tod
 
+      - name: Update Homebrew & formula
+        run: brew update
+
+
       - name: Audit tod formula
-        run: brew audit --strict --online --new-formula tod
+        run: brew audit --strict --online --new tod
