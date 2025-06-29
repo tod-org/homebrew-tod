@@ -1,0 +1,24 @@
+name: homebrew Audit
+
+on:
+  workflow_dispatch:
+
+jobs:
+  audit:
+    name: Runs brew audit on tod formula
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Homebrew
+        run: |
+          echo "::group::brew update"
+          brew update >/dev/null
+          echo "::endgroup::"
+
+      - name: Tap and audit formula
+        run: |
+          brew tap alanvardy/tod
+          brew audit --strict --online --new tod
