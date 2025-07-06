@@ -1,5 +1,5 @@
 class Tod < Formula
-  desc "Unofficial Todoist command-line client written in Rust"
+  desc "An Unofficial Todoist command-line client written in Rust"
   homepage "https://github.com/alanvardy/tod"
   version "0.9.1"
   license "MIT"
