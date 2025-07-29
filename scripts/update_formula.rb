@@ -3,7 +3,7 @@ require "open-uri"
 
 version = ARGV[0] or abort("Usage: ruby update_formula.rb <version> (e.g. 0.8.0)")
 tag = "v#{version}"
-base_url = "https://github.com/alanvardy/tod/releases/download/#{tag}"
+base_url = "https://github.com/tod-org/tod/releases/download/#{tag}"
 
 platforms = {
   mac_arm:     "tod-#{version}-darwin-arm64.tar.gz",
@@ -53,7 +53,7 @@ def replace_platform_block(formula, platform_key, filename, new_sha, version, fa
   end
 
   pattern, label = platform_section
-  new_url = "url \"https://github.com/alanvardy/tod/releases/download/v#{version}/#{filename}\""
+  new_url = "url \"https://github.com/tod-org/tod/releases/download/v#{version}/#{filename}\""
   new_sha_line = "sha256 \"#{new_sha}\""
 
   updated = formula.sub(pattern) do |block|
