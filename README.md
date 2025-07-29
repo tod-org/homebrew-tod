@@ -1,8 +1,8 @@
 # homebrew-tod
 
-Install [tod](https://www.github.com/alanvardy/tod) using homebrew
+Install [tod](https://www.github.com/tod-org/tod) using homebrew
 
 ```bash
-brew tap alanvardy/tod
+brew tap tod-org/tod
 brew install tod
 ```
