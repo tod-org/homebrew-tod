@@ -1,6 +1,6 @@
 name: Update Homebrew Formula from tod
 
-# Triggered remotely by 'repository_dispatch' from alanvardy/tod
+# Triggered remotely by 'repository_dispatch' from tod-org/tod
 # Also supports manual triggering via workflow_dispatch
 on:
   repository_dispatch:
@@ -24,13 +24,13 @@ jobs:
         with:
           ref: main
 
-      # Step 2: Fetch the latest release tag from the tod repo (alanvardy/tod)
+      # Step 2: Fetch the latest release tag from the tod repo (tod-org/tod)
       #         Strip the leading 'v' to pass just the version to the Ruby script (e.g., 0.8.0)
       # jq comes preinstalled on runners; dont' need to install/update
       - name: Fetch latest release tag from tod repo
         id: get_version
         run: |
-          tag=$(curl -s https://api.github.com/repos/alanvardy/tod/releases/latest | jq -r .tag_name)
+          tag=$(curl -s https://api.github.com/repos/tod-org/tod/releases/latest | jq -r .tag_name)
           version=${tag#v}
           echo "Latest tag: $tag"
           echo "Version without v: $version"
