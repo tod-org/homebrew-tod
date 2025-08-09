@@ -1,5 +1,5 @@
 class Tod < Formula
-  desc "An unofficial Todoist command-line client"
+  desc "Unofficial Todoist command-line client"
   homepage "https://github.com/tod-org/tod"
   version "0.10.0"
   license "MIT"
