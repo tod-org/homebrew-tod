@@ -7,8 +7,12 @@ on:
     types: [update-homebrew]
 
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to update to (e.g., v1.2.3 or 1.2.3). If blank, use latest release."
+        required: false
+        type: string
 
-# Allows pushing commits to the repository
 permissions:
   contents: write
 
@@ -18,50 +22,63 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Clone the homebrew-tod repo and ensure we're on the main branch
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: main
 
-      # Step 2: Fetch the latest release tag from the tod repo (tod-org/tod)
-      #         Strip the leading 'v' to pass just the version to the Ruby script (e.g., 0.8.0)
-      # jq comes preinstalled on runners; dont' need to install/update
-      - name: Fetch latest release tag from tod repo
-        id: get_version
+      # Decide the version/tag:
+      # - If manually triggered with an input tag, normalize it (strip leading 'v')
+      # - Otherwise fetch the latest release from tod-org/tod
+      - name: Resolve version
+        id: resolve_version
+        shell: bash
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
         run: |
-          tag=$(curl -s https://api.github.com/repos/tod-org/tod/releases/latest | jq -r .tag_name)
-          version=${tag#v}
-          echo "Latest tag: $tag"
-          echo "Version without v: $version"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
 
-      # Step 3: Set up Ruby so we can run the formula update script
+          if [[ -n "${INPUT_TAG:-}" ]]; then
+            # normalize: accept vX.Y.Z or X.Y.Z
+            tag="${INPUT_TAG}"
+            version="${tag#v}"
+            echo "Using provided tag: ${tag}"
+          else
+            echo "No tag provided; fetching latest release from tod-org/tod…"
+            # Use GitHub API to get the latest tag
+            tag="$(curl -fsSL https://api.github.com/repos/tod-org/tod/releases/latest | jq -r .tag_name)"
+            if [[ -z "${tag}" || "${tag}" == "null" ]]; then
+              echo "Failed to fetch latest tag from tod-org/tod"
+              exit 1
+            fi
+            version="${tag#v}"
+            echo "Latest tag: ${tag}"
+          fi
+
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.1'
 
-      # Step 4: Run the Ruby script to update the formula with correct version and SHA256s
       - name: Run formula updater
         run: |
-          ruby scripts/update_formula.rb ${{ steps.get_version.outputs.version }}
+          ruby scripts/update_formula.rb "${{ steps.resolve_version.outputs.version }}"
 
-      # Step 5: Show a diff of what changed (useful for debugging)
       - name: Show diff
         run: git --no-pager diff Formula/tod.rb || true
 
-      # Step 6: Commit and push changes — only if Formula/tod.rb was actually modified
-      - name: Commit and push changes
+      - name: Commit and push changes (if any)
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-          # Check for changes and commit only if there are any
           if ! git diff --quiet Formula/tod.rb; then
-            echo "✅ Changes detected. Committing..."
+            echo "✅ Changes detected. Committing…"
             git add Formula/tod.rb
-            git commit -m "Update formula to version ${{ steps.get_version.outputs.version }}"
+            git commit -m "Update formula to version ${{ steps.resolve_version.outputs.version }}"
             git push
           else
             echo "ℹ️ No changes to commit."
