@@ -10,7 +10,7 @@ jobs:
 
     steps:
       - name: Tap tod formula
-        run: brew tap alanvardy/tod
+        run: brew tap tod-org/tod
 
       - name: Update Homebrew & formula
         run: brew update
