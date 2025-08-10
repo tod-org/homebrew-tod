@@ -1,4 +1,4 @@
-name: Verify Formula Hashes (no brew)
+name: Verify Formula Hashes
 
 on:
   # Run manually from the Actions tab
