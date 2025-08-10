@@ -2,11 +2,6 @@ name: Brew Audit (Local Repo)
 
 on:
   workflow_dispatch:
-    inputs:
-      branch:
-        description: "Branch of homebrew-tod to audit"
-        required: false
-        default: "main"
 
 jobs:
   audit:
@@ -16,7 +11,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: tod-org/homebrew-tod
-          ref: ${{ github.event.inputs.branch }}
+          ref: ${{ github.ref_name }}
           fetch-depth: 1
 
       - name: Tap local path & run all checks
@@ -27,12 +22,11 @@ jobs:
           CANON_TAP="tod-org/tod"
           FORMULA="tod"
 
-          echo "==> Current branch: ${{ github.event.inputs.branch }}"
+          echo "==> Branch: ${{ github.ref_name }}"
           echo "PWD: $(pwd)"
           ls -la
 
-          # Ensure clean slate, then tap using the local path
-          brew untap "$CANON_TAP" || true
+          # Tap using the local path
           brew tap "tod-org/homebrew-tod" "$(pwd)"
 
           # Verify the tap
