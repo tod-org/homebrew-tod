@@ -21,6 +21,7 @@ ALLOWED_HOSTS = %w[
   github.com
   objects.githubusercontent.com
   github-releases.githubusercontent.com
+  release-assets.githubusercontent.com
 ].freeze
 MAX_REDIRECTS = 5
 SIZE_CAP_BYTES = 300 * 1024 * 1024 # 300 MB safety cap
