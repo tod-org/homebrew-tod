@@ -5,7 +5,7 @@ on:
 
 jobs:
   audit:
-    name: Run brew audit on tod formula
+    name: Run brew audit on the online (github repo) tod formula
     runs-on: macos-latest
 
     steps:

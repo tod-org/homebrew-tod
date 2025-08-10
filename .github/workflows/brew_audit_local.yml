@@ -3,77 +3,39 @@ name: Brew Audit (Local Repo)
 on:
   workflow_dispatch:
     inputs:
-      ref:
-        description: "Ref of homebrew-tod to audit (branch, tag, or SHA)"
-        type: string
+      branch:
+        description: "Branch of homebrew-tod to audit"
         required: false
         default: "main"
-      formula:
-        description: "Formula name to audit (e.g., tod)"
-        type: string
-        required: false
-        default: "tod"
-      online:
-        description: "Run online checks (recommended)"
-        type: boolean
-        required: false
-        default: true
-
-permissions:
-  contents: read
-
-concurrency:
-  group: brew-audit
-  cancel-in-progress: false
 
 jobs:
   audit:
     runs-on: macos-latest
-
     steps:
-      - name: Create app token (tod-deploy)
-        id: app-token
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ vars.TODD_APP_ID }}
-          private-key: ${{ secrets.TODD_PRIVATE_KEY }}
-          owner: tod-org
-          repositories: homebrew-tod
-
       - name: Checkout homebrew-tod
         uses: actions/checkout@v4
         with:
           repository: tod-org/homebrew-tod
-          ref: ${{ inputs.ref }}
+          ref: ${{ github.event.inputs.branch }}
           fetch-depth: 1
-          token: ${{ steps.app-token.outputs.token }}
-          persist-credentials: false
 
-      - name: Tap local path & audit
-        env:
-          HOMEBREW_NO_AUTO_UPDATE: "1"
-          HOMEBREW_NO_ANALYTICS: "1"
+      - name: Tap local path & run all checks
+        shell: bash
         run: |
           set -euo pipefail
 
           CANON_TAP="tod-org/tod"
-          FORMULA="${{ inputs.formula }}"
-          ONLINE_FLAG=""
-          if [[ "${{ inputs.online }}" == "true" ]]; then
-            ONLINE_FLAG="--online"
-          fi
+          FORMULA="tod"
 
+          echo "==> Current branch: ${{ github.event.inputs.branch }}"
           echo "PWD: $(pwd)"
-          echo "Contents:"
           ls -la
-          echo "Formula dir:"
-          ls -la Formula || true
 
-          # Ensure clean slate, then tap using the canonical name with LOCAL PATH
+          # Ensure clean slate, then tap using the local path
           brew untap "$CANON_TAP" || true
-          brew tap "$CANON_TAP" "$(pwd)"
+          brew tap "tod-org/homebrew-tod" "$(pwd)"
 
-          # Sanity: make sure the tap is registered and points to this path
+          # Verify the tap
           brew tap-info --installed "$CANON_TAP"
 
           echo "==> readall"
@@ -82,5 +44,5 @@ jobs:
           echo "==> style"
           brew style "$CANON_TAP/$FORMULA"
 
-          echo "==> audit --strict $ONLINE_FLAG"
-          brew audit --strict $ONLINE_FLAG "$CANON_TAP/$FORMULA"
+          echo "==> audit --strict --online"
+          brew audit --strict --online "$CANON_TAP/$FORMULA"
