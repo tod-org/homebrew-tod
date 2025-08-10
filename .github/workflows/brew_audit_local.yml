@@ -28,7 +28,7 @@ concurrency:
 
 jobs:
   audit:
-    runs-on: macos-latest   # Homebrew is preinstalled on macOS runners
+    runs-on: macos-latest
 
     steps:
       - name: Create app token (tod-deploy)
@@ -56,17 +56,25 @@ jobs:
         run: |
           set -euo pipefail
 
-          RAW_TAP="tod-org/homebrew-tod"
-          CANON_TAP="${RAW_TAP/homebrew-/}"   # -> tod-org/tod
+          CANON_TAP="tod-org/tod"
           FORMULA="${{ inputs.formula }}"
           ONLINE_FLAG=""
           if [[ "${{ inputs.online }}" == "true" ]]; then
             ONLINE_FLAG="--online"
           fi
 
-          # Tap the local checkout path as the tap; canonical name becomes tod-org/tod
+          echo "PWD: $(pwd)"
+          echo "Contents:"
+          ls -la
+          echo "Formula dir:"
+          ls -la Formula || true
+
+          # Ensure clean slate, then tap using the canonical name with LOCAL PATH
           brew untap "$CANON_TAP" || true
-          brew tap "$RAW_TAP" "$(pwd)"
+          brew tap "$CANON_TAP" "$(pwd)"
+
+          # Sanity: make sure the tap is registered and points to this path
+          brew tap-info --installed "$CANON_TAP"
 
           echo "==> readall"
           brew readall "$CANON_TAP"
