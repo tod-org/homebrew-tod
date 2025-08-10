@@ -1,0 +1,81 @@
+name: Brew Audit (Local from Repo)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Ref of homebrew-tod to audit (branch, tag, or SHA)"
+        type: string
+        required: false
+        default: "main"
+      formula:
+        description: "Formula name to audit (e.g., tod)"
+        type: string
+        required: false
+        default: "tod"
+      online:
+        description: "Run online checks (recommended)"
+        type: boolean
+        required: false
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: brew-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: macos-latest   # Homebrew is preinstalled here
+
+    steps:
+      - name: Create app token (tod-deploy)
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.TODD_APP_ID }}
+          private-key: ${{ secrets.TODD_PRIVATE_KEY }}
+          owner: tod-org
+          repositories: homebrew-tod
+
+      - name: Checkout homebrew-tod
+        uses: actions/checkout@v4
+        with:
+          repository: tod-org/homebrew-tod
+          ref: ${{ inputs.ref }}
+          fetch-depth: 1
+          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
+
+      - name: Homebrew env
+        run: |
+          brew --version
+          brew config
+
+      - name: Tap local path & audit
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: "1"
+          HOMEBREW_NO_ANALYTICS: "1"
+        run: |
+          set -euo pipefail
+          TAP="tod-org/homebrew-tod"
+          FORMULA="${{ inputs.formula }}"
+          ONLINE_FLAG=""
+          if [[ "${{ inputs.online }}" == "true" ]]; then
+            ONLINE_FLAG="--online"
+          fi
+
+          # Ensure any existing tap ref is cleared, then tap the local checkout path
+          brew untap "$TAP" || true
+          brew tap "$TAP" "$(pwd)"
+
+          echo "==> readall (syntax check)"
+          brew readall "$TAP"
+
+          echo "==> style"
+          brew style "$TAP/$FORMULA"
+
+          echo "==> audit --strict $ONLINE_FLAG"
+          brew audit --strict $ONLINE_FLAG "$TAP/$FORMULA"
