@@ -17,8 +17,13 @@ jobs:
 
 
       - name: Audit tod formula
-        run: brew audit --strict --online --new tod
-
+        run: |
+          brew audit --strict --online --new tod
+          brew style tod
+          brew readall tod 
+          brew tap-info --installed tod-org/tod
+          brew info tod
+          
   verify_hashes:
     runs-on: ubuntu-latest
 
