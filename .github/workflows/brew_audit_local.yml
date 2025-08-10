@@ -43,3 +43,5 @@ jobs:
 
           echo "==> audit --strict --online"
           brew audit --strict --online "$CANON_TAP/$FORMULA"
+          echo "==> info"
+          brew info "$CANON_TAP/$FORMULA"
