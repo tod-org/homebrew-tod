@@ -1,4 +1,4 @@
-name: Brew Audit
+name: Brew Audit (Current Tap)
 
 on:
   workflow_dispatch:
