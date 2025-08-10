@@ -1,4 +1,4 @@
-name: Brew Audit (Local from Repo)
+name: Brew Audit (Local Repo)
 
 on:
   workflow_dispatch:
@@ -28,7 +28,7 @@ concurrency:
 
 jobs:
   audit:
-    runs-on: macos-latest   # Homebrew is preinstalled here
+    runs-on: macos-latest   # Homebrew is preinstalled on macOS runners
 
     steps:
       - name: Create app token (tod-deploy)
@@ -49,33 +49,30 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           persist-credentials: false
 
-      - name: Homebrew env
-        run: |
-          brew --version
-          brew config
-
       - name: Tap local path & audit
         env:
           HOMEBREW_NO_AUTO_UPDATE: "1"
           HOMEBREW_NO_ANALYTICS: "1"
         run: |
           set -euo pipefail
-          TAP="tod-org/homebrew-tod"
+
+          RAW_TAP="tod-org/homebrew-tod"
+          CANON_TAP="${RAW_TAP/homebrew-/}"   # -> tod-org/tod
           FORMULA="${{ inputs.formula }}"
           ONLINE_FLAG=""
           if [[ "${{ inputs.online }}" == "true" ]]; then
             ONLINE_FLAG="--online"
           fi
 
-          # Ensure any existing tap ref is cleared, then tap the local checkout path
-          brew untap "$TAP" || true
-          brew tap "$TAP" "$(pwd)"
+          # Tap the local checkout path as the tap; canonical name becomes tod-org/tod
+          brew untap "$CANON_TAP" || true
+          brew tap "$RAW_TAP" "$(pwd)"
 
-          echo "==> readall (syntax check)"
-          brew readall "$TAP"
+          echo "==> readall"
+          brew readall "$CANON_TAP"
 
           echo "==> style"
-          brew style "$TAP/$FORMULA"
+          brew style "$CANON_TAP/$FORMULA"
 
           echo "==> audit --strict $ONLINE_FLAG"
-          brew audit --strict $ONLINE_FLAG "$TAP/$FORMULA"
+          brew audit --strict $ONLINE_FLAG "$CANON_TAP/$FORMULA"
