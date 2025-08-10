@@ -20,9 +20,8 @@ jobs:
         run: |
           brew audit --strict --online --new tod
           brew style tod
-          brew readall tod 
-          brew tap-info --installed tod-org/tod
-          brew info tod
+          brew readall tod-org/tod
+          brew tap-info tod-org/tod
           
   verify_hashes:
     runs-on: ubuntu-latest
