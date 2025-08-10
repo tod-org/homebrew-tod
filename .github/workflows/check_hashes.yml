@@ -1,0 +1,102 @@
+name: Verify Formula Hashes (no brew)
+
+on:
+  # Run manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      formula_path:
+        description: "Path to formula file"
+        type: string
+        required: false
+        default: "Formula/tod.rb"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout tap repo
+        uses: actions/checkout@v4
+
+      - name: Verify platform hashes (pure bash)
+        env:
+          FORMULA_PATH: ${{ inputs.formula_path || 'Formula/tod.rb' }}
+        run: |
+          set -euo pipefail
+
+          FORMULA="$FORMULA_PATH"
+          [[ -f "$FORMULA" ]] || { echo "Formula not found: $FORMULA"; exit 1; }
+
+          echo "Verifying hashes in: $FORMULA"
+
+          # Extract first url+sha256 inside each on_<os> / on_<arch> block
+          mapfile -t ROWS < <(awk '
+            BEGIN{
+              os=""; arch=""; osd=0; archd=0
+              url["macos|arm"]=""; url["macos|intel"]=""; url["linux|arm"]=""; url["linux|intel"]=""
+              sha["macos|arm"]=""; sha["macos|intel"]=""; sha["linux|arm"]=""; sha["linux|intel"]=""
+            }
+            function key(){ return os "|" arch }
+            /^[[:space:]]*on_macos[[:space:]]+do[[:space:]]*$/ { os="macos"; osd++; next }
+            /^[[:space:]]*on_linux[[:space:]]+do[[:space:]]*$/ { os="linux"; osd++; next }
+            (osd>0)&&/^[[:space:]]*on_arm[[:space:]]+do[[:space:]]*$/   { arch="arm";   archd++; next }
+            (osd>0)&&/^[[:space:]]*on_intel[[:space:]]+do[[:space:]]*$/ { arch="intel"; archd++; next }
+            {
+              if (osd>0 && archd>0) {
+                if (url[key()]=="" && match($0,/[[:space:]]*url[[:space:]]+"([^"]+)"/,m)) url[key()]=m[1]
+                if (sha[key()]=="" && match($0,/[[:space:]]*sha256[[:space:]]+"([0-9a-fA-F]{64})"/,m)) sha[key()]=tolower(m[1])
+              }
+              if ($0 ~ /^[[:space:]]*end[[:space:]]*$/) {
+                if (archd>0) { archd--; arch="" }
+                else if (osd>0) { osd--; os="" }
+              }
+            }
+            END{
+              labels["macos|arm"]="macOS ARM"
+              labels["macos|intel"]="macOS Intel"
+              labels["linux|arm"]="Linux ARM"
+              labels["linux|intel"]="Linux Intel"
+              for (k in labels) if (url[k]!="" && sha[k]!="") printf "%s|%s|%s\n", labels[k], url[k], sha[k]
+            }
+          ' "$FORMULA")
+
+          if [[ ${#ROWS[@]} -eq 0 ]]; then
+            echo "No platform url/sha pairs found in $FORMULA"
+            exit 1
+          fi
+
+          echo "Found ${#ROWS[@]} platform entries:"
+          printf ' - %s\n' "${ROWS[@]}"
+
+          mismatches=0
+          for row in "${ROWS[@]}"; do
+            IFS='|' read -r LABEL URL EXPECTED <<<"$row"
+            echo "🔽 $LABEL"
+            echo "    URL: $URL"
+            echo -n "    Hashing… "
+            # robust curl: follow redirects, fail on HTTP errors, retry a bit
+            if ! ACTUAL=$(curl -L --fail --retry 3 --retry-delay 2 --connect-timeout 20 --max-time 600 -sS "$URL" \
+                          | sha256sum | awk '{print tolower($1)}'); then
+              echo "ERROR downloading $URL"
+              mismatches=$((mismatches+1))
+              continue
+            fi
+            if [[ "$ACTUAL" == "$EXPECTED" ]]; then
+              echo "✅ MATCH ($ACTUAL)"
+            else
+              echo "❌ MISMATCH"
+              echo "       expected: $EXPECTED"
+              echo "       actual:   $ACTUAL"
+              mismatches=$((mismatches+1))
+            fi
+          done
+
+          if [[ $mismatches -gt 0 ]]; then
+            echo "❌ $mismatches platform hash(es) failed"
+            exit 1
+          fi
+
+          echo "✅ All platform hashes match."
