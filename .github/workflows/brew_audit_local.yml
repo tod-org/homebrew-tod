@@ -25,12 +25,15 @@ jobs:
           echo "==> Branch: ${{ github.ref_name }}"
           echo "PWD: $(pwd)"
           ls -la
-
-          # Tap using the local path
+          # Tap the local path
           brew tap "tod-org/homebrew-tod" "$(pwd)"
 
-          # Verify the tap
-          brew tap-info --installed "$CANON_TAP"
+          echo "==> tap-info (only $CANON_TAP)"
+          brew tap-info --installed | awk -v tap="$CANON_TAP" '
+            $0 ~ "^" tap ":" {p=1}
+            p {print}
+            p && $0=="" {exit}
+          '
 
           echo "==> readall"
           brew readall "$CANON_TAP"
