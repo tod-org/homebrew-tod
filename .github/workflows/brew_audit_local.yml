@@ -8,7 +8,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout homebrew-tod
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: tod-org/homebrew-tod
           ref: ${{ github.ref_name }}
