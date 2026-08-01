@@ -1,30 +1,30 @@
 class Tod < Formula
   desc "Unofficial Todoist command-line client"
   homepage "https://www.tod.cx"
-  version "0.17.0"
+  version "0.17.1"
   license "MIT"
 
   on_macos do
     on_intel do
-      url "https://github.com/tod-org/tod/releases/download/v0.17.0/tod-0.17.0-darwin-amd64.tar.gz"
-      sha256 "5bc0eda71c083e34c2d77b33bcc48903b0cb8bb7ef21770e8c4fdc697ec2ee5a"
+      url "https://github.com/tod-org/tod/releases/download/v0.17.1/tod-0.17.1-darwin-amd64.tar.gz"
+      sha256 "ef0d9d0337cc9706d65523b648561d3cde4281875e468023b0638e38025ce377"
     end
 
     on_arm do
-      url "https://github.com/tod-org/tod/releases/download/v0.17.0/tod-0.17.0-darwin-arm64.tar.gz"
-      sha256 "910196dbcf845b8513c0457af5e18fdc3580f8a7fe90b06909406f02e8b96c96"
+      url "https://github.com/tod-org/tod/releases/download/v0.17.1/tod-0.17.1-darwin-arm64.tar.gz"
+      sha256 "1ab180533de523e7af2701a2b6cd727af0d2e3baca605a3072f88cc242c51394"
     end
   end
 
   on_linux do
     on_intel do
-      url "https://github.com/tod-org/tod/releases/download/v0.17.0/tod-0.17.0-linux-amd64.tar.gz"
-      sha256 "3ff6570fc6453d0cc510f6bceda6195de654fd94ca0fb2427bdc3b9cc3255d78"
+      url "https://github.com/tod-org/tod/releases/download/v0.17.1/tod-0.17.1-linux-amd64.tar.gz"
+      sha256 "ade84a4b7a01320233827ff27dc063adae9612277c452892fbc17f10d2ceb8fc"
     end
 
     on_arm do
-      url "https://github.com/tod-org/tod/releases/download/v0.17.0/tod-0.17.0-linux-arm64.tar.gz"
-      sha256 "2cd7e354a2264f5eec497d5f9e648e8c334839e1547123ebcfaefadfbfe0b8d8"
+      url "https://github.com/tod-org/tod/releases/download/v0.17.1/tod-0.17.1-linux-arm64.tar.gz"
+      sha256 "c877c8402e5e02d2d4c767d200e222d4ca21dd39ec75b29300e6bc11afac8771"
     end
   end
 
